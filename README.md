@@ -20,5 +20,9 @@ Configure:
 Go to the record list view. There should be a "Requests config" button in the linkbox
 
 Known issues:
-- Comment ordering is breaking comment permalinks. They scroll to their (previous) position
-- Some styling misconfigurations/missing
+- Some styling missing
+- Some features not configurable (Check boolean constants in code)
+
+Changelog:
+- Fixed window position problem from reordering comments
+- Added Filled and Golden Popcorn styling in the request record view

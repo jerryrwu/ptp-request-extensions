@@ -132,9 +132,9 @@ function init_ptp_reqs_configs() {
         'TiB'   : GM_config.get('TiB')
     };
     time_mappings = {
-        ' '     : GM_config.get('under-month'),
+        'year'  : GM_config.get('over-year'),
         'month' : GM_config.get('under-year'),
-        'year'  : GM_config.get('over-year')
+        ' '     : GM_config.get('under-month')
     };
  
 }
@@ -196,13 +196,12 @@ function resolve_color(text) {
             return val;
         }
     }
-    var color = '';
+    
     for (const [key, val] of Object.entries(time_mappings)) {
         if (text.indexOf(key) != -1) {
-            color = val;
+            return val;
         }
     }
-    if (color != '') return color;
     console.log(text);
 }
 /*
@@ -504,6 +503,22 @@ function rrv_fix_contribution_list(eval) {
         contrib_list[cli].classList.remove('hidden');
     }
 }
+
+/*
+Patch comment reverse side effect:
+For comment permalinks, position is off
+*/
+const comment_permalink_regex = /postid=[0-9]*#post[0-9]*/g;
+function fix_comment_reverse_position() {
+    // check if we are in a permalink
+    var post_id = document.URL.match(comment_permalink_regex);
+    if (post_id.length == 1) {
+        var offset = $jq('#' + post_id[0].split('#')[1]).offset();
+        console.log(offset);
+        window.scrollTo(offset.left, offset.top);
+    }
+}
+
 function rrv_reverse_comments(eval) {
     if (!eval) return;
     var parent = document.getElementById('request-table').parentElement;
@@ -523,6 +538,7 @@ function rrv_reverse_comments(eval) {
     }
     parent.appendChild(page_bottom_node);
     parent.appendChild(reply);
+    fix_comment_reverse_position();
 }
  
  
@@ -600,6 +616,20 @@ function fix_record_view() {
                     row[1].innerText == 'Any',
                     row[1],
                     GM_config.get('any-container-color')
+                );
+                break;
+            case 'Filled':
+                set_color(
+                    true, //if this row populated, there is a link
+                    row[1].children[0].children[0],
+                    GM_config.get('filled-color')
+                );
+                break;
+            case 'Golden Popcorn only':
+                set_color(
+                    row[1].innerText == 'Yes', 
+                    row[1],
+                    GM_config.get('gp-color')
                 );
                 break;
         }
@@ -750,8 +780,8 @@ function fix_user_record_view() {
         );
     }
 }
- 
- 
+
+
 // Decides which script to run, depending on the current view
 (function() {
     init_ptp_reqs_configs();
@@ -766,10 +796,9 @@ function fix_user_record_view() {
     } else if (document.URL.indexOf('torrents.php?id=') != -1) {
         fix_torrent_record_view();
     }
-}
- 
-)();
- 
+})();
+
+
 /*
 Patch the minimum ratio
 */
