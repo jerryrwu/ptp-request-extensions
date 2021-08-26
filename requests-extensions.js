@@ -9,9 +9,9 @@
 // @grant       GM_setValue
 // @grant       GM_getValue
 // ==/UserScript==
- 
- 
- 
+
+
+
 /*
 Configuration stuff
 */
@@ -136,12 +136,12 @@ function init_ptp_reqs_configs() {
         'month' : GM_config.get('under-year'),
         ' '     : GM_config.get('under-month')
     };
- 
+
 }
 function append_ptp_reqs_configs(new_fields) {
     ptp_reqs_config_fields = Object.assign({}, ptp_reqs_config_fields, new_fields);
 }
- 
+
 /*
 Utility functions
 */
@@ -153,25 +153,13 @@ function get_torrent_page(url, callback, args) {
         onload: callback.bind(null, args)
     });
 }
- 
-function format_torrent_link(href, callback, args) {
-    var data = {};
-    data.action = 'preview';
-    data.body = href;
-    AddAntiCsrfTokenToPostData(data);
-    $jq.post(
-        "ajax.php",
-        AddAntiCsrfTokenToPostData(data),
-        function(response){callback(response, args)}
-    );
-}
- 
+
 function set_color(eval, elem, color) {
     if (eval) {
         elem.style.color = color;
     }
 }
- 
+
 function set_bold(eval, elem) {
     if (eval) {
         var new_elem = document.createElement('strong');
@@ -180,13 +168,13 @@ function set_bold(eval, elem) {
         elem.appendChild(new_elem);
     }
 }
- 
+
 function format_time(eval, elem) {
     if (eval) {
         elem.innerText = elem.innerText.replace(' and', ',');
     }
 }
- 
+
 function resolve_color(text) {
     if (text == 'filled') {
         return GM_config.get('filled-color');
@@ -196,7 +184,7 @@ function resolve_color(text) {
             return val;
         }
     }
-    
+
     for (const [key, val] of Object.entries(time_mappings)) {
         if (text.indexOf(key) != -1) {
             return val;
@@ -311,10 +299,10 @@ function rlv_get_column_index() {
         'last_vote' : last_vote_col,
     }
 }
- 
+
 function fix_list_view() {
     attach_ptp_reqs_config();
- 
+
     var table = document.getElementById('request_table');
     var rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
     // Gets the column index from the header row
@@ -448,8 +436,8 @@ async function rrv_fix_exists_text(eval, elem) {
         }
     }
 }
- 
- 
+
+
 function replace_movie_details(new_details) {
     document.getElementById('movieinfo').children[1].outerHTML = new_details;
 }
@@ -484,8 +472,8 @@ async function rrv_fix_movie_details(eval) {
         }
     }
 }
- 
- 
+
+
 function rrv_fix_remove_vote(eval, elem) {
     if (eval && (elem.innerHTML.indexOf('(-)') != -1)) {
         var vote_parent = elem.getElementsByTagName('span')[0];
@@ -540,9 +528,9 @@ function rrv_reverse_comments(eval) {
     parent.appendChild(reply);
     fix_comment_reverse_position();
 }
- 
- 
-function fix_record_view() {    
+
+
+function fix_record_view() {
     var table = document.getElementById('request-table');
     var rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
     for (var row_index = 0; row_index < rows.length; row_index++) {
@@ -627,20 +615,20 @@ function fix_record_view() {
                 break;
             case 'Golden Popcorn only':
                 set_color(
-                    row[1].innerText == 'Yes', 
+                    row[1].innerText == 'Yes',
                     row[1],
                     GM_config.get('gp-color')
                 );
                 break;
         }
- 
+
     }
     rrv_fix_movie_details(GM_config.get('rrv-fix-movie-info'))
     rrv_fix_contribution_list(GM_config.get('rrv-add-contrib-list'));
     rrv_reverse_comments(GM_config.get('rrv-reverse-comment'))
     // vote functionality
- 
- 
+
+
 }
 /*
 torrents.php record view modifications
@@ -674,21 +662,21 @@ append_ptp_reqs_configs({
         'default': 'true'
     }
 });
- 
- 
+
+
 function fix_torrent_record_view() {
     var table = document.getElementById('requests');
     if (table == null) return;
     var rows = table.children[1].children;
     for (var row_index = 0; row_index < rows.length; row_index++) {
         var row = rows[row_index];
-        var cells = row.getElementsByTagName('td');
-        rlv_fix_name_column_color(cells[0]);
+        var cells = row.getElementsByTagName('td');  
         set_color(
             GM_config.get('trv-fix-gp-color') && cells[0].children[0].children.length != 0,
             cells[0].children[0].children[0],
             GM_config.get('gp-color')
         );
+        rlv_fix_name_column_color(cells[0]);
         set_color(
             GM_config.get('trv-fix-bounty-color'),
             cells[2],
@@ -711,7 +699,7 @@ function fix_torrent_record_view() {
         );
     }
 }
- 
+
 /*
 user.php record view modifications
 */
@@ -781,20 +769,37 @@ function fix_user_record_view() {
     }
 }
 
+const app_parser = /([a-zA-Z]*).php/;
+const action_parser = /action=([a-zA-Z]*)/;
+const id_parser = /(?<!(post)|(thread))id=([0-9]*)/;
+const comment_parser = /postid=([0-9]*)/;
 
 // Decides which script to run, depending on the current view
 (function() {
     init_ptp_reqs_configs();
-    if (document.URL.indexOf('requests.php?action=view&id=') != -1) {
-        fix_record_view();
-    } else if (document.URL.indexOf('requests.php?action=new') != -1) {
- 
-    } else if (document.URL.indexOf('requests.php') != -1) {
-        fix_list_view();
-    } else if (document.URL.indexOf('user.php?id=') != -1) {
-        fix_user_record_view();
-    } else if (document.URL.indexOf('torrents.php?id=') != -1) {
-        fix_torrent_record_view();
+    var app = document.URL.match(app_parser) || [];
+    var record_id = document.URL.match(id_parser);
+    var action = document.URL.match(action_parser) || [];
+    var comment_parser = document.URL.match(comment_parser) || [];
+    switch (app[1]) {
+        case 'requests':
+            if (action[1] == 'new') {
+                break;
+            }
+            if (record_id == null) {
+                fix_list_view();
+            } else {
+                fix_record_view();
+            }
+            break;
+        case 'torrents':
+            fix_torrent_record_view();
+            break;
+        case 'user':
+            fix_user_record_view();
+            break;
+        case 'log':
+            break;
     }
 })();
 
@@ -807,18 +812,18 @@ function Calc_2()
 	var bountyAmount = GetRequestBountyAmount();
 	$( '#amount' ).raw().value = bountyAmount;
 	$( '#new_bounty' ).raw().innerHTML = get_size( bountyAmount );
- 
+
 	var newUploaded = $( '#current_uploaded' ).raw().value - bountyAmount;
 	if ( newUploaded < 0 )
 		newUploaded = 0;
- 
+
 	$( '#new_uploaded' ).raw().innerHTML = get_size( newUploaded );
 	$jq( "#new_uploaded" ).removeClass();
 	if ( newUploaded <= 0 )
 		$jq( "#new_uploaded" ).addClass( get_ratio_color( 0 ) );
- 
+
 	$( '#new_ratio' ).raw().innerHTML = ratio( newUploaded, $( '#current_downloaded' ).raw().value );
- 
+
 	var minimumBounty = $( '#minimum_bounty' ).raw().value;
     var below_user_ratio = (parseFloat($( '#new_ratio' ).raw().innerText) < parseFloat(GM_config.get('vote-new-ratio')));
     var disable = (bountyAmount < minimumBounty || newUploaded <= 0) || below_user_ratio;
@@ -827,7 +832,7 @@ function Calc_2()
 }
 var new_max_ratio = parseFloat(GM_config.get('vote-new-ratio'));
 if (
-    GM_config.get('vote-override') 
+    GM_config.get('vote-override')
     && new_max_ratio > 0.65
     && document.getElementById('button') != null
 ) {
