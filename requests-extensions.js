@@ -299,68 +299,74 @@ function rlv_get_column_index() {
         'last_vote' : last_vote_col,
     }
 }
+const column_index = rlv_get_column_index();
 
-function fix_list_view() {
-    attach_ptp_reqs_config();
-
-    var table = document.getElementById('request_table');
-    var rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
-    // Gets the column index from the header row
-    var column_index = rlv_get_column_index();
-    for (var ri = 0; ri < rows.length; ri++){
-        var row_cells = rows[ri].getElementsByTagName('td');
-        if (column_index.bounty != -1){
-            set_color(
-                GM_config.get('rlv-fix-bounty-color'),
-                row_cells[column_index.bounty],
-                resolve_color(row_cells[column_index.bounty].innerText)
-            );
-            set_bold(
-                GM_config.get('rlv-fix-bounty-bold'),
-                row_cells[column_index.bounty]
-            );
-        }
-        if (column_index.name       != -1){
-            rlv_fix_name_column_color(row_cells[column_index.name]);
-            set_color(
-                GM_config.get('rlv-fix-gp-color') && row_cells[column_index.name].getElementsByClassName('tags')[0].getElementsByClassName('golden-popcorn-character').length == 1,
-                row_cells[column_index.name].getElementsByClassName('tags')[0].getElementsByClassName('golden-popcorn-character')[0],
-                GM_config.get('gp-color')
-            );
-        }
-        if (column_index.created    != -1) {
+function fix_list_row(row) {
+    var row_cells = row.getElementsByTagName('td');
+    if (column_index.bounty != -1){
+        set_color(
+            GM_config.get('rlv-fix-bounty-color'),
+            row_cells[column_index.bounty],
+            resolve_color(row_cells[column_index.bounty].innerText)
+        );
+        set_bold(
+            GM_config.get('rlv-fix-bounty-bold'),
+            row_cells[column_index.bounty]
+        );
+    }
+    if (column_index.name       != -1){
+        rlv_fix_name_column_color(row_cells[column_index.name]);
+        set_color(
+            GM_config.get('rlv-fix-gp-color') && row_cells[column_index.name].getElementsByClassName('tags')[0].getElementsByClassName('golden-popcorn-character').length == 1,
+            row_cells[column_index.name].getElementsByClassName('tags')[0].getElementsByClassName('golden-popcorn-character')[0],
+            GM_config.get('gp-color')
+        );
+    }
+    if (column_index.created    != -1) {
+        format_time(
+            GM_config.get('rlv-fix-created-date-format'),
+            row_cells[column_index.created].children[0]
+        );
+        set_color(
+            GM_config.get('rlv-fix-created-color'),
+            row_cells[column_index.created],
+            resolve_color(row_cells[column_index.created].innerText)
+        );
+    }
+    if (column_index.filled     != -1) {
+        // This If the filled cell is "No", it does not have the same elements
+        if (row_cells[column_index.filled].innerText != 'No') {
             format_time(
-                GM_config.get('rlv-fix-created-date-format'),
-                row_cells[column_index.created].children[0]
+                GM_config.get('rlv-fix-filled-date-format'),
+                row_cells[column_index.filled].children[0].children[0].children[0]
             );
             set_color(
-                GM_config.get('rlv-fix-created-color'),
-                row_cells[column_index.created],
-                resolve_color(row_cells[column_index.created].innerText)
-            );
-        }
-        if (column_index.filled     != -1) {
-            // This If the filled cell is "No", it does not have the same elements
-            if (row_cells[column_index.filled].innerText != 'No') {
-                format_time(
-                    GM_config.get('rlv-fix-filled-date-format'),
-                    row_cells[column_index.filled].children[0].children[0].children[0]
-                );
-                set_color(
-                    GM_config.get('rlv-fix-filled-color'),
-                    row_cells[column_index.filled].children[0].children[0].children[0],
-                    resolve_color('filled')
-                );
-            }
-        }
-        if (column_index.last_vote  != -1) {
-            format_time(
-                GM_config.get('rlv-fix-last-vote-date-format'),
-                row_cells[column_index.last_vote].children[0]
+                GM_config.get('rlv-fix-filled-color'),
+                row_cells[column_index.filled].children[0].children[0].children[0],
+                resolve_color('filled')
             );
         }
     }
+    if (column_index.last_vote  != -1) {
+        format_time(
+            GM_config.get('rlv-fix-last-vote-date-format'),
+            row_cells[column_index.last_vote].children[0]
+        );
+    }
 }
+
+function fix_list_view() {
+    attach_ptp_reqs_config();
+    var table = document.getElementById('request_table');
+    var rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+    for (var ri = 0; ri < rows.length; ri++){
+        fix_list_row(rows[ri]);
+    }
+    table.getElementsByTagName('tbody')[0].addEventListener('DOMNodeInserted', function(event){
+        if (event.target.tagName == 'TR') fix_list_row(event.target);
+    });
+}
+
 /*
 request.php record view modifications
 */
