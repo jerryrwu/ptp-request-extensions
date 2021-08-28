@@ -299,7 +299,7 @@ function rlv_get_column_index() {
         'last_vote' : last_vote_col,
     }
 }
-const column_index = rlv_get_column_index();
+var column_index;
 
 function fix_list_row(row) {
     var row_cells = row.getElementsByTagName('td');
@@ -357,6 +357,7 @@ function fix_list_row(row) {
 
 function fix_list_view() {
     attach_ptp_reqs_config();
+    column_index = rlv_get_column_index();
     var table = document.getElementById('request_table');
     var rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
     for (var ri = 0; ri < rows.length; ri++){
@@ -506,7 +507,7 @@ const comment_permalink_regex = /postid=[0-9]*#post[0-9]*/g;
 function fix_comment_reverse_position() {
     // check if we are in a permalink
     var post_id = document.URL.match(comment_permalink_regex);
-    if (post_id.length == 1) {
+    if (post_id) {
         var offset = $jq('#' + post_id[0].split('#')[1]).offset();
         console.log(offset);
         window.scrollTo(offset.left, offset.top);
