@@ -108,6 +108,12 @@ var ptp_reqs_config_fields = {
         'label': 'Min ratio to vote', // Appears next to field
         'type': 'text', // Makes this setting a text field
         'default': '1.05' // Default value if user doesn't change it
+    },
+    'time_format_replacement':
+    {
+        'label': 'Time text replacement. [["original","new"], ... [] = off',
+        'type': 'text',
+        'default': '[["years","yrs"],["year","yr"],["weeks","wks"], [" ago",""]]'
     }
 };
 function attach_ptp_reqs_config() {
@@ -145,6 +151,18 @@ function append_ptp_reqs_configs(new_fields) {
 /*
 Utility functions
 */
+function replace_time_text(eval, elem) {
+    if (!eval) return;
+    var replacements = JSON.parse(GM_config.get('time_format_replacement'));
+    var elem_html = elem.innerHTML;
+    for (let index = 0; index < replacements.length; index++) {
+        const original_string = replacements[index][0];
+        const new_string = replacements[index][1];
+        elem_html = elem_html.replace(original_string, new_string);
+    }
+    elem.innerHTML = elem_html;
+}
+
 function get_torrent_page(url, callback, args) {
     GM_xmlhttpRequest({
         method: 'get',
@@ -323,6 +341,7 @@ function fix_list_row(row) {
         );
     }
     if (column_index.created    != -1) {
+        
         format_time(
             GM_config.get('rlv-fix-created-date-format'),
             row_cells[column_index.created].children[0]
@@ -331,6 +350,10 @@ function fix_list_row(row) {
             GM_config.get('rlv-fix-created-color'),
             row_cells[column_index.created],
             resolve_color(row_cells[column_index.created].innerText)
+        );
+        replace_time_text(
+            true,
+            row_cells[column_index.created]
         );
     }
     if (column_index.filled     != -1) {
@@ -345,11 +368,19 @@ function fix_list_row(row) {
                 row_cells[column_index.filled].children[0].children[0].children[0],
                 resolve_color('filled')
             );
+            replace_time_text(
+                true,
+                row_cells[column_index.filled].children[0].children[0].children[0]
+            );
         }
     }
     if (column_index.last_vote  != -1) {
         format_time(
             GM_config.get('rlv-fix-last-vote-date-format'),
+            row_cells[column_index.last_vote].children[0]
+        );
+        replace_time_text(
+            true,
             row_cells[column_index.last_vote].children[0]
         );
     }
@@ -549,6 +580,10 @@ function fix_record_view() {
                     row[1].children[0],
                     resolve_color(row[1].innerText)
                 );
+                replace_time_text(
+                    true,
+                    row[1].children[0]
+                );
                 break;
             case 'Votes':
                 rrv_fix_remove_vote(
@@ -625,6 +660,12 @@ function fix_record_view() {
                     row[1].innerText == 'Yes',
                     row[1],
                     GM_config.get('gp-color')
+                );
+                break;
+            case 'Last vote':
+                replace_time_text(
+                    true,
+                    row[1]
                 );
                 break;
         }
@@ -704,6 +745,10 @@ function fix_torrent_record_view() {
             cells[3].children[0],
             GM_config.get('gp-color')
         );
+        replace_time_text(
+            true,
+            cells[3].children[0]
+        );
     }
 }
 
@@ -772,6 +817,10 @@ function fix_user_record_view() {
             GM_config.get('urv-fix-created-date-format'),
             cells[3].children[0],
             GM_config.get('gp-color')
+        );
+        replace_time_text(
+            true,
+            cells[3].children[0]
         );
     }
 }
